@@ -1,5 +1,5 @@
 import { User, Project, Task, predefinedTags } from "./models";
-import { hash, compare } from "bcrypt";
+import { hash, compare } from "bcryptjs";
 import connectToDatabase from "../db";
 
 // User operations
