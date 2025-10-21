@@ -20,16 +20,15 @@ export async function GET() {
     return NextResponse.json([]);
   }
 
-  const tasksWithTags = await Promise.all(
-    tasks.map(async (task) => ({
-      ...task,
-      tags: (
-        await Promise.all(
-          (task.tags || []).map((tagId: string) => tagOps.get(tagId))
-        )
-      ).filter(Boolean),
-    }))
-  );
+  const tasksWithTags = tasks.map((task) => ({
+    id: task._id?.toString() || task.id || "",
+    title: task.title || "",
+    description: task.description || "",
+    projectId: task.projectId || null,
+    tags: Array.isArray(task.tags) ? task.tags : [],
+    completed: Boolean(task.completed),
+    createdAt: task.createdAt || new Date().toISOString(),
+  }));
 
   return NextResponse.json(tasksWithTags);
 }
@@ -50,15 +49,11 @@ export async function POST(request: NextRequest) {
     await request.json();
 
   const task = await taskOps.create({
-    id: generateId(),
     title,
     description,
-    duration,
     projectId: projectId || undefined,
     userId: user.id,
     tags: tagIds || [],
-    completed: false,
-    createdAt: new Date(),
   });
 
   return NextResponse.json(task);

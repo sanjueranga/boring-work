@@ -10,6 +10,9 @@ export interface Session {
 }
 
 const secretKey = process.env.AUTH_SECRET;
+if (!secretKey) {
+  throw new Error("AUTH_SECRET environment variable is not set");
+}
 const key = new TextEncoder().encode(secretKey);
 
 async function encrypt(payload: any) {
@@ -43,7 +46,13 @@ export async function setSession(session: Session) {
   const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
   const sessionToken = await encrypt(session);
   const cookieStore = await cookies();
-  cookieStore.set("session", sessionToken, { expires, httpOnly: true });
+  cookieStore.set("session", sessionToken, {
+    expires,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+  });
 }
 
 export async function clearSession() {

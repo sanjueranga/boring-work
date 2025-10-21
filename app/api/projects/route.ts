@@ -18,9 +18,11 @@ export async function GET() {
   const projects = await projectOps.list(user.id);
   const projectsWithCounts = await Promise.all(
     projects.map(async (project) => ({
-      ...project,
+      id: project._id.toString(),
+      title: project.title,
+      description: project.description,
       _count: {
-        tasks: (await taskOps.listByProject(project.id)).length,
+        tasks: (await taskOps.listByProject(project._id.toString())).length,
       },
     }))
   );
@@ -42,12 +44,9 @@ export async function POST(request: NextRequest) {
   const { title, description, expectedOutcomes } = await request.json();
 
   const project = await projectOps.create({
-    id: generateId(),
     title,
     description,
-    expectedOutcomes,
     userId: user.id,
-    createdAt: new Date(),
   });
 
   return NextResponse.json(project);

@@ -1,27 +1,47 @@
-import { Pool } from 'pg';
+import mongoose from "mongoose";
+
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error("Please define the MONGODB_URI environment variable");
+}
 
 declare global {
-  // allow global `var` declarations
-  // eslint-disable-next-line no-var
-  var dbPool: Pool | undefined;
+  var mongoose: {
+    conn: null | typeof mongoose;
+    promise: null | Promise<typeof mongoose>;
+  };
 }
 
-let pool: Pool;
+let cached = global.mongoose;
 
-if (process.env.NODE_ENV === 'production') {
-  pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-      rejectUnauthorized: false,
-    },
-  });
-} else {
-  if (!global.dbPool) {
-    global.dbPool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+async function connectToDatabase() {
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+      return mongoose;
     });
   }
-  pool = global.dbPool;
+
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
+  return cached.conn;
 }
 
-export default pool;
+export default connectToDatabase;
