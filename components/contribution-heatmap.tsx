@@ -6,11 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+// Tooltip imports are fully removed
 import {
   Card,
   CardContent,
@@ -54,7 +50,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
     Array<{ name: string; weekIndex: number }>
   >([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
-  const [yearsAgo, setYearsAgo] = useState(1); // <-- 1. STATE ADDED
+  const [yearsAgo, setYearsAgo] = useState(1);
 
   useEffect(() => {
     setIsMounted(true);
@@ -77,7 +73,6 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
     today.setHours(0, 0, 0, 0);
 
     const startDate = new Date(today);
-    // <-- 2. CALCULATION UPDATED
     startDate.setFullYear(startDate.getFullYear() - yearsAgo);
 
     const firstDate = new Date(startDate);
@@ -110,8 +105,6 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
 
     setWeeks(allWeeks);
 
-    // ...
-    // Find the first and last date that has data
     const firstValidWeek = allWeeks.findIndex((week) =>
       week.some((day) => day && day !== "future")
     );
@@ -125,7 +118,6 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
       allWeeks.length - lastValidWeek
     );
 
-    // Generate month labels
     const labels: Array<{ name: string; weekIndex: number }> = [];
     let currentMonth: number | null = null;
 
@@ -150,8 +142,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
     });
 
     setMonthLabels(labels);
-    // ...
-  }, [data, isMounted, yearsAgo]); // <-- 2. DEPENDENCY ARRAY UPDATED
+  }, [data, isMounted, yearsAgo]);
 
   const getColor = (day: DayData) => {
     if (!day || day === "future" || !day.tagWeights) return "bg-muted";
@@ -198,11 +189,11 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
                   (lastWeekWithData !== -1 ? lastWeekWithData : weeks.length);
 
                 const numWeeks = endWeekIndex - month.weekIndex;
-                const monthWidth = numWeeks * 28;
+                const monthWidth = numWeeks * 28; // (24px cell + 4px gap)
 
                 const style = {
                   minWidth: monthWidth,
-                  paddingLeft: index === 0 ? 0 : 8, // Add padding between months
+                  paddingLeft: index === 0 ? 0 : 8,
                 };
 
                 return (
@@ -229,7 +220,6 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
                       );
                     }
 
-                    // Handle null days (before start date) by rendering an empty cell
                     if (!day) {
                       return (
                         <div
@@ -239,29 +229,27 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
                       );
                     }
 
+                    // Get the formatted date string to use in the title
+                    const dateString = new Date(
+                      day.date.replace(/-/g, "/")
+                    ).toLocaleDateString(undefined, {
+                      weekday: "long",
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
+                    });
+
                     return (
                       <Popover key={`${weekIndex}-${dayIndex}`}>
-                        <Tooltip delayDuration={50}>
-                          <TooltipTrigger asChild>
-                            <PopoverTrigger asChild>
-                              <div
-                                className={`w-6 h-6 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor(
-                                  day
-                                )}`}
-                              />
-                            </PopoverTrigger>
-                          </TooltipTrigger>
-                          <TooltipContent className="text-xs">
-                            {new Date(
-                              day.date.replace(/-/g, "/")
-                            ).toLocaleDateString(undefined, {
-                              weekday: "long",
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </TooltipContent>
-                        </Tooltip>
+                        <PopoverTrigger asChild>
+                          <div
+                            // The native HTML title attribute provides the hover effect
+                            title={dateString}
+                            className={`w-6 h-6 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor(
+                              day
+                            )}`}
+                          />
+                        </PopoverTrigger>
                         {day && day.weight > 0 && (
                           <PopoverContent className="w-80">
                             <Card>
@@ -334,7 +322,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
           </div>
         </div>
 
-        {/* <-- 3. LEGEND/BUTTONS SECTION UPDATED --> */}
+        {/* Legend and Year Buttons */}
         <div className="flex gap-2 mt-4 text-xs text-muted-foreground items-center w-full">
           <span>Less</span>
           <div className="flex gap-1">
@@ -345,8 +333,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
             <div className="w-3 h-3 rounded bg-green-800 dark:bg-green-500" />
           </div>
           <span>More</span>
-          <div className="flex-grow" />{" "}
-          {/* This pushes the buttons to the right */}
+          <div className="flex-grow" />
           <div className="flex gap-1">
             <button
               onClick={() => setYearsAgo(1)}

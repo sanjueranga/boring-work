@@ -39,6 +39,7 @@ ENV NODE_ENV=production
 COPY package.json pnpm-lock.yaml ./
 
 # Install ONLY production dependencies
+RUN pnpm config set network-timeout 120000
 RUN pnpm install --prod --frozen-lockfile
 
 # Copy the standalone output from the "builder" stage
