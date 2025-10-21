@@ -172,11 +172,11 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
     <div className="overflow-x-auto">
       <div className="inline-block">
         <div className="flex gap-1">
-          <div className="flex flex-col gap-[2px] pt-6">
+          <div className="flex flex-col gap-1 pt-6"> {/* MODIFIED: gap-[2px] to gap-1 */}
             {dayLabels.map((label) => (
               <div
                 key={label}
-                className="w-5 h-5 flex items-center justify-center text-[10px] text-muted-foreground"
+                className="w-6 h-6 flex items-center justify-center text-[10px] text-muted-foreground" // MODIFIED: w-5 h-5
               >
                 {label[0]}
               </div>
@@ -196,7 +196,8 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
                   (lastWeekWithData !== -1 ? lastWeekWithData : weeks.length);
 
                 const numWeeks = endWeekIndex - month.weekIndex;
-                const monthWidth = numWeeks * 24; // (20px cell + 4px gap) * weeks - last gap
+                // MODIFIED: 24 to 28 (w-6 is 24px + gap-1 is 4px)
+                const monthWidth = numWeeks * 28;
 
                 const style = {
                   minWidth: monthWidth,
@@ -216,13 +217,13 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
             </div>
             <div className="flex gap-1">
               {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-[2px]">
+                <div key={weekIndex} className="flex flex-col gap-1"> {/* MODIFIED: gap-[2px] to gap-1 */}
                   {week.map((day, dayIndex) => {
                         if (day === "future") {
                           return (
                             <div
                               key={`${weekIndex}-${dayIndex}`}
-                              className="w-5 h-5"
+                              className="w-6 h-6" // MODIFIED: w-5 h-5
                             />
                           );
                         }
@@ -232,7 +233,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
                           return (
                             <div
                               key={`${weekIndex}-${dayIndex}`}
-                              className="w-5 h-5"
+                              className="w-6 h-6" // MODIFIED: w-5 h-5
                             />
                           );
                         }
@@ -243,7 +244,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
                               <TooltipTrigger asChild>
                                 <PopoverTrigger asChild>
                                   <div
-                                    className={`w-5 h-5 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor(
+                                    className={`w-6 h-6 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor( // MODIFIED: w-5 h-5
                                       day
                                     )}`}
                                   />
