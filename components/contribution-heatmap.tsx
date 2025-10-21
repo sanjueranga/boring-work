@@ -7,6 +7,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Card,
   CardContent,
   CardHeader,
@@ -213,90 +218,114 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
               {weeks.map((week, weekIndex) => (
                 <div key={weekIndex} className="flex flex-col gap-[2px]">
                   {week.map((day, dayIndex) => {
-                    if (day === "future") {
-                      return (
-                        <div
-                          key={`${weekIndex}-${dayIndex}`}
-                          className="w-5 h-5"
-                        />
-                      );
-                    }
-
-                    return (
-                      <Popover key={`${weekIndex}-${dayIndex}`}>
-                        <PopoverTrigger asChild>
-                          <div
-                            className={`w-5 h-5 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor(
-                              day
-                            )}`}
-                          />
-                        </PopoverTrigger>
-                        {day && day.weight > 0 && (
-                          <PopoverContent className="w-80">
-                            <Card>
-                              <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                                <Sparkles className="h-8 w-8 text-yellow-400" />
-                                <div>
-                                  <CardTitle className="text-xl font-bold">
-                                    Level Up!
-                                  </CardTitle>
-                                  <CardDescription>
-                                    You earned{" "}
-                                    {Object.values(day.tagWeights || {}).reduce(
-                                      (a, b) => a + b,
-                                      0
-                                    )}{" "}
-                                    XP on{" "}
-                                    {new Date(
-                                      day.date.replace(/-/g, "/")
-                                    ).toLocaleDateString()}
-                                  </CardDescription>
-                                </div>
-                              </CardHeader>
-                              <CardContent>
-                                <div className="space-y-4">
-                                  <p className="font-bold">XP Breakdown:</p>
-                                  {Object.entries(day.tagWeights || {}).map(
-                                    ([tagId, weight]) => {
-                                      const tag = allTags.find(
-                                        (t) => t.id === tagId
-                                      );
-                                      if (!tag) return null;
-                                      const percentage =
-                                        (weight / day.weight) * 100;
-                                      return (
-                                        <div key={tagId}>
-                                          <div className="flex justify-between text-sm mb-1">
-                                            <span className="font-medium">
-                                              {tag.name}
-                                            </span>
-                                            <span>{weight} XP</span>
-                                          </div>
-                                          <div className="h-2 w-full rounded-full bg-primary/20 overflow-hidden">
-                                            <div
-                                              className="h-full rounded-full transition-all"
-                                              style={{
-                                                width: `${percentage}%`,
-                                                backgroundColor: tag.color,
-                                              }}
-                                            />
-                                          </div>
-                                        </div>
-                                      );
-                                    }
-                                  )}
-                                </div>
-                                <div className="mt-4 text-center text-xs text-muted-foreground italic">
-                                  "The journey of a thousand miles begins with a
-                                  single step."
-                                </div>
-                              </CardContent>
-                            </Card>
-                          </PopoverContent>
-                        )}
-                      </Popover>
-                    );
-                  })}
+                        if (day === "future") {
+                          return (
+                            <div
+                              key={`${weekIndex}-${dayIndex}`}
+                              className="w-5 h-5"
+                            />
+                          );
+                        }
+    
+                        // Handle null days (before start date) by rendering an empty cell
+                        if (!day) {
+                          return (
+                            <div
+                              key={`${weekIndex}-${dayIndex}`}
+                              className="w-5 h-5"
+                            />
+                          );
+                        }
+    
+                        return (
+                          <Popover key={`${weekIndex}-${dayIndex}`}>
+                            <Tooltip delayDuration={50}>
+                              <TooltipTrigger asChild>
+                                <PopoverTrigger asChild>
+                                  <div
+                                    className={`w-5 h-5 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor(
+                                      day
+                                    )}`}
+                                  />
+                                </PopoverTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent className="text-xs">
+                                {new Date(
+                                  day.date.replace(/-/g, "/")
+                                ).toLocaleDateString(undefined, {
+                                  weekday: "long",
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                })}
+                              </TooltipContent>
+                            </Tooltip>
+                            {day && day.weight > 0 && (
+                              <PopoverContent className="w-80">
+                                <Card>
+                                  <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                                    <Sparkles className="h-8 w-8 text-yellow-400" />
+                                    <div>
+                                      <CardTitle className="text-xl font-bold">
+                                        Level Up!
+                                      </CardTitle>
+                                      <CardDescription>
+                                        You earned{" "}
+                                        {Object.values(day.tagWeights || {}).reduce(
+                                          (a, b) => a + b,
+                                          0
+                                        )}{" "}
+                                        XP on{" "}
+                                        {new Date(
+                                          day.date.replace(/-/g, "/")
+                                        ).toLocaleDateString()}
+                                      </CardDescription>
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <div className="space-y-4">
+                                      <p className="font-bold">XP Breakdown:</p>
+                                      {Object.entries(day.tagWeights || {}).map(
+                                        ([tagId, weight]) => {
+                                          const tag = allTags.find(
+                                            (t) => t.id === tagId
+                                          );
+                                          if (!tag) return null;
+                                          const percentage =
+                                            (weight / day.weight) * 100;
+                                          return (
+                                            <div key={tagId}>
+                                              <div className="flex justify-between text-sm mb-1">
+                                                <span className="font-medium">
+                                                  {tag.name}
+                                                </span>
+                                                <span>{weight} XP</span>
+                                              </div>
+                                              <div className="h-2 w-full rounded-full bg-primary/20 overflow-hidden">
+                                                <div
+                                                  className="h-full rounded-full transition-all"
+                                                  style={{
+                                                    width: `${percentage}%`,
+                                                    backgroundColor: tag.color,
+                                                  }}
+                                                />
+                                              </div>
+                                            </div>
+                                          );
+                                        }
+                                      )}
+                                    </div>
+                                    <div className="mt-4 text-center text-xs text-muted-foreground italic">
+                                      "The journey of a thousand miles begins with a
+                                      single step."
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              </PopoverContent>
+                            )}
+                          </Popover>
+                        );
+                      })}
                 </div>
               ))}
             </div>
