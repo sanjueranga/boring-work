@@ -54,6 +54,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
     Array<{ name: string; weekIndex: number }>
   >([]);
   const [allTags, setAllTags] = useState<Tag[]>([]);
+  const [yearsAgo, setYearsAgo] = useState(1); // <-- 1. STATE ADDED
 
   useEffect(() => {
     setIsMounted(true);
@@ -76,7 +77,8 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
     today.setHours(0, 0, 0, 0);
 
     const startDate = new Date(today);
-    startDate.setFullYear(startDate.getFullYear() - 1);
+    // <-- 2. CALCULATION UPDATED
+    startDate.setFullYear(startDate.getFullYear() - yearsAgo);
 
     const firstDate = new Date(startDate);
     const day = firstDate.getDay();
@@ -149,7 +151,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
 
     setMonthLabels(labels);
     // ...
-  }, [data, isMounted]);
+  }, [data, isMounted, yearsAgo]); // <-- 2. DEPENDENCY ARRAY UPDATED
 
   const getColor = (day: DayData) => {
     if (!day || day === "future" || !day.tagWeights) return "bg-muted";
@@ -172,11 +174,11 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
     <div className="overflow-x-auto">
       <div className="inline-block">
         <div className="flex gap-1">
-          <div className="flex flex-col gap-1 pt-6"> {/* MODIFIED: gap-[2px] to gap-1 */}
+          <div className="flex flex-col gap-1 pt-6">
             {dayLabels.map((label) => (
               <div
                 key={label}
-                className="w-6 h-6 flex items-center justify-center text-[10px] text-muted-foreground" // MODIFIED: w-5 h-5
+                className="w-6 h-6 flex items-center justify-center text-[10px] text-muted-foreground"
               >
                 {label[0]}
               </div>
@@ -196,7 +198,6 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
                   (lastWeekWithData !== -1 ? lastWeekWithData : weeks.length);
 
                 const numWeeks = endWeekIndex - month.weekIndex;
-                // MODIFIED: 24 to 28 (w-6 is 24px + gap-1 is 4px)
                 const monthWidth = numWeeks * 28;
 
                 const style = {
@@ -217,123 +218,124 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
             </div>
             <div className="flex gap-1">
               {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="flex flex-col gap-1"> {/* MODIFIED: gap-[2px] to gap-1 */}
+                <div key={weekIndex} className="flex flex-col gap-1">
                   {week.map((day, dayIndex) => {
-                        if (day === "future") {
-                          return (
-                            <div
-                              key={`${weekIndex}-${dayIndex}`}
-                              className="w-6 h-6" // MODIFIED: w-5 h-5
-                            />
-                          );
-                        }
-    
-                        // Handle null days (before start date) by rendering an empty cell
-                        if (!day) {
-                          return (
-                            <div
-                              key={`${weekIndex}-${dayIndex}`}
-                              className="w-6 h-6" // MODIFIED: w-5 h-5
-                            />
-                          );
-                        }
-    
-                        return (
-                          <Popover key={`${weekIndex}-${dayIndex}`}>
-                            <Tooltip delayDuration={50}>
-                              <TooltipTrigger asChild>
-                                <PopoverTrigger asChild>
-                                  <div
-                                    className={`w-6 h-6 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor( // MODIFIED: w-5 h-5
-                                      day
-                                    )}`}
-                                  />
-                                </PopoverTrigger>
-                              </TooltipTrigger>
-                              <TooltipContent className="text-xs">
-                                {new Date(
-                                  day.date.replace(/-/g, "/")
-                                ).toLocaleDateString(undefined, {
-                                  weekday: "long",
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })}
-                              </TooltipContent>
-                            </Tooltip>
-                            {day && day.weight > 0 && (
-                              <PopoverContent className="w-80">
-                                <Card>
-                                  <CardHeader className="flex flex-row items-center gap-4 pb-2">
-                                    <Sparkles className="h-8 w-8 text-yellow-400" />
-                                    <div>
-                                      <CardTitle className="text-xl font-bold">
-                                        Level Up!
-                                      </CardTitle>
-                                      <CardDescription>
-                                        You earned{" "}
-                                        {Object.values(day.tagWeights || {}).reduce(
-                                          (a, b) => a + b,
-                                          0
-                                        )}{" "}
-                                        XP on{" "}
-                                        {new Date(
-                                          day.date.replace(/-/g, "/")
-                                        ).toLocaleDateString()}
-                                      </CardDescription>
-                                    </div>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <div className="space-y-4">
-                                      <p className="font-bold">XP Breakdown:</p>
-                                      {Object.entries(day.tagWeights || {}).map(
-                                        ([tagId, weight]) => {
-                                          const tag = allTags.find(
-                                            (t) => t.id === tagId
-                                          );
-                                          if (!tag) return null;
-                                          const percentage =
-                                            (weight / day.weight) * 100;
-                                          return (
-                                            <div key={tagId}>
-                                              <div className="flex justify-between text-sm mb-1">
-                                                <span className="font-medium">
-                                                  {tag.name}
-                                                </span>
-                                                <span>{weight} XP</span>
-                                              </div>
-                                              <div className="h-2 w-full rounded-full bg-primary/20 overflow-hidden">
-                                                <div
-                                                  className="h-full rounded-full transition-all"
-                                                  style={{
-                                                    width: `${percentage}%`,
-                                                    backgroundColor: tag.color,
-                                                  }}
-                                                />
-                                              </div>
-                                            </div>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                    <div className="mt-4 text-center text-xs text-muted-foreground italic">
-                                      "The journey of a thousand miles begins with a
-                                      single step."
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              </PopoverContent>
-                            )}
-                          </Popover>
-                        );
-                      })}
+                    if (day === "future") {
+                      return (
+                        <div
+                          key={`${weekIndex}-${dayIndex}`}
+                          className="w-6 h-6"
+                        />
+                      );
+                    }
+
+                    // Handle null days (before start date) by rendering an empty cell
+                    if (!day) {
+                      return (
+                        <div
+                          key={`${weekIndex}-${dayIndex}`}
+                          className="w-6 h-6"
+                        />
+                      );
+                    }
+
+                    return (
+                      <Popover key={`${weekIndex}-${dayIndex}`}>
+                        <Tooltip delayDuration={50}>
+                          <TooltipTrigger asChild>
+                            <PopoverTrigger asChild>
+                              <div
+                                className={`w-6 h-6 rounded-sm border border-border cursor-pointer transition-all hover:ring-1 hover:ring-primary ${getColor(
+                                  day
+                                )}`}
+                              />
+                            </PopoverTrigger>
+                          </TooltipTrigger>
+                          <TooltipContent className="text-xs">
+                            {new Date(
+                              day.date.replace(/-/g, "/")
+                            ).toLocaleDateString(undefined, {
+                              weekday: "long",
+                              year: "numeric",
+                              month: "long",
+                              day: "numeric",
+                            })}
+                          </TooltipContent>
+                        </Tooltip>
+                        {day && day.weight > 0 && (
+                          <PopoverContent className="w-80">
+                            <Card>
+                              <CardHeader className="flex flex-row items-center gap-4 pb-2">
+                                <Sparkles className="h-8 w-8 text-yellow-400" />
+                                <div>
+                                  <CardTitle className="text-xl font-bold">
+                                    Level Up!
+                                  </CardTitle>
+                                  <CardDescription>
+                                    You earned{" "}
+                                    {Object.values(day.tagWeights || {}).reduce(
+                                      (a, b) => a + b,
+                                      0
+                                    )}{" "}
+                                    XP on{" "}
+                                    {new Date(
+                                      day.date.replace(/-/g, "/")
+                                    ).toLocaleDateString()}
+                                  </CardDescription>
+                                </div>
+                              </CardHeader>
+                              <CardContent>
+                                <div className="space-y-4">
+                                  <p className="font-bold">XP Breakdown:</p>
+                                  {Object.entries(day.tagWeights || {}).map(
+                                    ([tagId, weight]) => {
+                                      const tag = allTags.find(
+                                        (t) => t.id === tagId
+                                      );
+                                      if (!tag) return null;
+                                      const percentage =
+                                        (weight / day.weight) * 100;
+                                      return (
+                                        <div key={tagId}>
+                                          <div className="flex justify-between text-sm mb-1">
+                                            <span className="font-medium">
+                                              {tag.name}
+                                            </span>
+                                            <span>{weight} XP</span>
+                                          </div>
+                                          <div className="h-2 w-full rounded-full bg-primary/20 overflow-hidden">
+                                            <div
+                                              className="h-full rounded-full transition-all"
+                                              style={{
+                                                width: `${percentage}%`,
+                                                backgroundColor: tag.color,
+                                              }}
+                                            />
+                                          </div>
+                                        </div>
+                                      );
+                                    }
+                                  )}
+                                </div>
+                                <div className="mt-4 text-center text-xs text-muted-foreground italic">
+                                  "The journey of a thousand miles begins with a
+                                  single step."
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </PopoverContent>
+                        )}
+                      </Popover>
+                    );
+                  })}
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        <div className="flex gap-2 mt-4 text-xs text-muted-foreground">
+        {/* <-- 3. LEGEND/BUTTONS SECTION UPDATED --> */}
+        <div className="flex gap-2 mt-4 text-xs text-muted-foreground items-center w-full">
           <span>Less</span>
           <div className="flex gap-1">
             <div className="w-3 h-3 rounded bg-muted" />
@@ -343,6 +345,30 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
             <div className="w-3 h-3 rounded bg-green-800 dark:bg-green-500" />
           </div>
           <span>More</span>
+          <div className="flex-grow" />{" "}
+          {/* This pushes the buttons to the right */}
+          <div className="flex gap-1">
+            <button
+              onClick={() => setYearsAgo(1)}
+              className={`px-2 py-0.5 rounded ${
+                yearsAgo === 1
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              } transition-colors`}
+            >
+              1Y
+            </button>
+            <button
+              onClick={() => setYearsAgo(2)}
+              className={`px-2 py-0.5 rounded ${
+                yearsAgo === 2
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              } transition-colors`}
+            >
+              2Y
+            </button>
+          </div>
         </div>
       </div>
     </div>
